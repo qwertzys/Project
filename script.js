@@ -1,5 +1,6 @@
 import * as THREE from "./threejs/build/three.module.js";
 import {OrbitControls} from "./threejs/examples/jsm/controls/OrbitControls.js";
+import {GLTFLoader} from "./threejs/examples/jsm/loaders/GLTFLoader.js";
 
 var scene, freeCamera, thirdCamera, renderer, control;
 
@@ -9,11 +10,10 @@ const init = () => {
     freeCamera = new THREE.PerspectiveCamera(75, window.innerWidth/window.innerHeight, 0.1, 10000);
     freeCamera.position.set(640, 480, 240); //640, 480, 240
 
-    // thirdCamera = new THREE.PerspectiveCamera(90, window.innerWidth/window.innerHeight, 0.1, 10000);
+    thirdCamera = new THREE.PerspectiveCamera(90, window.innerWidth/window.innerHeight, 0.1, 10000);
     // thirdCamera.position.set() // Spaceship Vector3(x, y + 16, z-16);
 
     renderer = new THREE.WebGLRenderer({
-        // shadowMap: THREE.PCFShadowMap,
         antialias: true
     });
 
@@ -29,12 +29,17 @@ const init = () => {
 
 const createObject = () => {
 
-    // Test
+    // Spaceship
+    // let spaceshipLoader = new GLTFLoader();
+    // let spaceship = spaceshipLoader.load("./assets/model/spaceship/scene.gltf");
+
+
     // Point Light
     let pointLight = new THREE.PointLight("#FFFFFF", 1, 1280);
     pointLight.castShadow = true;
     pointLight.position.set(640, 320, 0);
     // Sun: Rad 40, Color #FFFFFF, Position Vector3(640, 320, 0), Cast Shadow False, Receive Shadow False
+
 
     let sun = createSun(40, "#FFFFFF");
     sun.position.set(640, 320, 0);
@@ -48,7 +53,7 @@ const createObject = () => {
     // Venus: Rad 4.8, Color #FFFFFF, Position Vector3(80, 320, 0), Cast Shadow True, Receive Shadow True
     let venusLoader = new THREE.TextureLoader();
     let venusImg = venusLoader.load("./assets/textures/venus.jpg");
-    let venus = createSphere(4.8, "FFFFFF", venusImg);
+    let venus = createSphere(4.8, "#FFFFFF", venusImg);
     venus.position.set(80, 320, 0);
     
     // Earth: Rad 4.8, Color #FFFFFF, Position Vector3(100, 320, 0), Cast Shadow True, Receive Shadow True
