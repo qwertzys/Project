@@ -24,6 +24,7 @@ const init = () => {
     control = new OrbitControls(freeCamera, renderer.domElement);
     
     createObject();
+    createSpaceShip();
 
 }
 
@@ -190,6 +191,49 @@ const createBox = () => {
     let mesh = new THREE.Mesh(geometry, material);
     return mesh;
 }
+
+const createSpaceShip = () => {
+    const loader = new THREE.TextureLoader();
+    
+    // Load textures
+    const baseColor = loader.load('./assets/model/spaceship/textures/BASE_baseColor.png');
+    const emissive = loader.load('./assets/model/spaceship/textures/BASE_emissive.png');
+    const metallicRoughness = loader.load('./assets/model/spaceship/textures/BASE_metallicRoughness.png');
+    const normalMap = loader.load('./assets/model/spaceship/textures/BASE_normal.png');
+
+    // Define material with textures
+    const material = new THREE.MeshStandardMaterial({
+        map: baseColor,
+        emissiveMap: emissive,
+        emissiveIntensity: 1,
+        metalnessMap: metallicRoughness,
+        normalMap: normalMap,
+        doubleSide: THREE.DoubleSide,
+    });
+
+    // Load GLTF model
+    const gltfLoader = new GLTFLoader();
+    gltfLoader.load('./assets/model/spaceship/scene.gltf', (gltf) => {
+        const spaceship = gltf.scene;
+
+        // Apply material to the spaceship meshes
+        spaceship.traverse((child) => {
+            if (child.isMesh) {
+                child.material = material;
+                child.castShadow = true;
+                child.receiveShadow = true;
+            }
+        });
+
+        // Position and scale the spaceship
+        spaceship.position.set(110, 320, 0);  // Adjust as needed
+        spaceship.scale.set(5, 5, 5);      // Adjust scale if the spaceship is too small
+
+        // Add spaceship to the scene
+        scene.add(spaceship);
+    });
+};
+
 
 const render = () => {
     requestAnimationFrame(render);
