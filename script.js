@@ -31,6 +31,7 @@ const init = () => {
     
     createObject();
     createSpaceShip();
+    createSkybox();
 }
 
 const createObject = () => {
@@ -84,10 +85,11 @@ const createObject = () => {
     saturn.position.set(240, 320, 0);
 
     // Saturn Ring: inRad 16, outRad 32, thetaSeg 64, Color #FFFFFF, Saturn's Position Vector3(240, 320, 0), Cast Shadow False Receive Shadow True
-    // let saturnRingLoader = new THREE.TextureLoader();
-    // let saturnRingImg = saturnRingLoader.load("./assets/textures/saturn_ring.jpg");
-    // let saturnRing = createRing(16, 32, 64, "#FFFFFF", saturnRingImg);
-    // saturnRing.position.set(280, 320, 0);
+    let saturnRingLoader = new THREE.TextureLoader();
+    let saturnRingImg = saturnRingLoader.load("./assets/textures/saturn_ring.png");
+    let saturnRing = createRing(16, 32, 64, "#FFFFFF", saturnRingImg);
+    saturnRing.position.set(240, 320, 0);
+    saturnRing.rotation.x = Math.PI / 2; // Rotate to align with the XZ plane
 
     // Uranus: Rad 8, Color #FFFFFF, Position Vector3(280, 320, 0), Cast Shadow True, Receive Shadow True
     let uranusLoader = new THREE.TextureLoader();
@@ -96,8 +98,12 @@ const createObject = () => {
     uranus.position.set(280, 320, 0);
 
     // Uranus Ring: inRad 16, outRad 20, thetaSeg 64, Color #FFFFFF, Uranus Position Vector3(280, 320, 0), Cast Shadow False Receive Shadow True
-    // let uranusRing = createRing(16, 20, 64, "#FFFFFF");
-    // uranusRing.position.set(THREE.Vector3(280, 320, 0));
+    let uranusRingLoader = new THREE.TextureLoader();
+    let uranusRingImg = uranusRingLoader.load("./assets/textures/uranus_ring.png");
+    let uranusRing = createRing(16, 20, 64, "#FFFFFF", uranusRingImg);
+    uranusRing.position.set(280, 320, 0);
+    uranusRing.rotation.x = Math.PI / 2; // Rotate to align with the XZ plane
+    
 
     // Neptune: Rad 6, Color #FFFFFF, Position Vector3(320, 320, 0), Cast Shadow True, Receive Shadow True
     let neptuneLoader = new THREE.TextureLoader();
@@ -105,10 +111,12 @@ const createObject = () => {
     neptune = createSphere(6, "#FFFFFF", neptuneImg);
     neptune.position.set(320, 320, 0);
 
-
     // Satelite: radTop 1, radBot 0.5, Height 0.4, radSeg 8, Color #CCCCCC, Metalness 0.5, Roughness 0.5, Position (100 + 8, 320, 0), Cast Shadow False, Receive Shadow True
     satelite = createCylinder(1, 0.5, 4, 8, "#CCCCCC", 0.5, 0.5);
     satelite.position.set(108, 320, 0);
+
+    //AmbientLight
+    let ambientLight = new THREE.AmbientLight("#FFFFFF", 1);
 
     // Add All Planets (including its ring) into a group for rotation that will be applied in a different function
     planetGroup = new THREE.Group();
@@ -209,6 +217,9 @@ const createObject = () => {
         spotLight,
         sun,
         planetGroup,
+        ambientLight,
+        saturnRing,
+        uranusRing
         textList,
     ];
 
@@ -255,6 +266,7 @@ const createRing = (inRad, outRad, thetaSeg, color, img) => {
     let mesh = new THREE.Mesh(geometry, material);
     mesh.castShadow = false;
     mesh.receiveShadow = true;
+    mesh.rotation.x = Math.PI / 2; // Rotate the ring to align with the XZ plane
     return mesh;
 }
 
@@ -338,14 +350,26 @@ const createSpaceShip = () => {
         });
 
         // Position and scale the spaceship
-        spaceship.position.set(110, 320, 0);  // Adjust as needed
-        spaceship.scale.set(5, 5, 5);      // Adjust scale if the spaceship is too small
+        spaceship.position.set(115, 320, 0);  // Adjust as needed
+        spaceship.scale.set(0.2, 0.2, 0.2);      // Adjust scale if the spaceship is too small
 
         // Add spaceship to the scene
         scene.add(spaceship);
     });
 };
 
+const createSkybox = () => {
+    const loader = new THREE.CubeTextureLoader();
+    const texture = loader.load([
+        './assets/skybox/right.png',  // Positif X
+        './assets/skybox/left.png',   // Negatif X
+        './assets/skybox/top.png',    // Positif Y
+        './assets/skybox/bottom.png', // Negatif Y
+        './assets/skybox/front.png',  // Positif Z
+        './assets/skybox/back.png',   // Negatif Z
+    ]);
+    scene.background = texture;
+}; d
 const switchCam = (event) => {
     // console.log(event.key);
     if (event.key == " "){
