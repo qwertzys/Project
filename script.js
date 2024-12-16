@@ -2,11 +2,17 @@ import * as THREE from "./threejs/build/three.module.js";
 import {OrbitControls} from "./threejs/examples/jsm/controls/OrbitControls.js";
 import {GLTFLoader} from "./threejs/examples/jsm/loaders/GLTFLoader.js";
 import { FontLoader } from "./threejs/examples/jsm/loaders/FontLoader.js";
+import { TextGeometry } from "./threejs/examples/jsm/geometries/TextGeometry.js";
 
 var scene, freeCamera, thirdCamera, selectedCamera, renderer, control;
-var planetGroup;
+var planetGroup, planets, planetAngles, planetSpeeds, planetDelays;
 var sun, mercury, venus, earth, mars, jupiter, saturn, uranus, neptune, satelite;
 var text, textList;
+var startTime = Date.now();
+var sunPosition;
+var spaceship;
+
+
 
 const init = () => {
     scene = new THREE.Scene();
@@ -47,6 +53,7 @@ const createObject = () => {
     // Sun: Rad 40, Color #FFFFFF, Position Vector3(640, 320, 0), Cast Shadow False, Receive Shadow False
     let sun = createSun(40, "#FFFFFF");
     sun.position.set(640, 320, 0);
+    
 
     // Mercury: Rad 3.2, Color #FFFFFF, Position Vector3(58, 320, 0), Cast Shadow True, Receive Shadow True
     let mercuryLoader = new THREE.TextureLoader();
@@ -64,7 +71,8 @@ const createObject = () => {
     let earthLoader = new THREE.TextureLoader();
     let earthImg = earthLoader.load("./assets/textures/earth.jpg");
     earth = createSphere(4.8, "#FFFFFF", earthImg);
-    earth.position.set(100, 320, 0);
+    earth.position.set(0, 0, 0);
+
 
     // Mars: Rad 4, Color #FFFFFF, Position Vector3(130, 320, 0), Cast Shadow True, Receive Shadow True
     let marsLoader = new THREE.TextureLoader();
@@ -82,28 +90,37 @@ const createObject = () => {
     let saturnLoader = new THREE.TextureLoader();
     let saturnImg = saturnLoader.load("./assets/textures/saturn.jpg");
     saturn = createSphere(10, "#FFFFFF", saturnImg);
-    saturn.position.set(240, 320, 0);
+    saturn.position.set(0, 0, 0);
 
     // Saturn Ring: inRad 16, outRad 32, thetaSeg 64, Color #FFFFFF, Saturn's Position Vector3(240, 320, 0), Cast Shadow False Receive Shadow True
     let saturnRingLoader = new THREE.TextureLoader();
     let saturnRingImg = saturnRingLoader.load("./assets/textures/saturn_ring.png");
     let saturnRing = createRing(16, 32, 64, "#FFFFFF", saturnRingImg);
-    saturnRing.position.set(240, 320, 0);
+    saturnRing.position.set(0, 0, 0);
     saturnRing.rotation.x = Math.PI / 2; // Rotate to align with the XZ plane
+
+    //Group Saturn and its RIng
+    let saturnGroup = new THREE.Group();
+    saturnGroup.add(saturn, saturnRing);
+    saturnGroup.position.set(240, 320, 0);
 
     // Uranus: Rad 8, Color #FFFFFF, Position Vector3(280, 320, 0), Cast Shadow True, Receive Shadow True
     let uranusLoader = new THREE.TextureLoader();
     let uranusImg = uranusLoader.load("./assets/textures/uranus.jpg");
     uranus = createSphere(8, "#FFFFFF", uranusImg);
-    uranus.position.set(280, 320, 0);
+    uranus.position.set(0, 0, 0);
 
     // Uranus Ring: inRad 16, outRad 20, thetaSeg 64, Color #FFFFFF, Uranus Position Vector3(280, 320, 0), Cast Shadow False Receive Shadow True
     let uranusRingLoader = new THREE.TextureLoader();
     let uranusRingImg = uranusRingLoader.load("./assets/textures/uranus_ring.png");
     let uranusRing = createRing(16, 20, 64, "#FFFFFF", uranusRingImg);
-    uranusRing.position.set(280, 320, 0);
+    uranusRing.position.set(0, 0, 0);
     uranusRing.rotation.x = Math.PI / 2; // Rotate to align with the XZ plane
     
+    //Group Uranus and its RIng
+    let uranusGroup = new THREE.Group();
+    uranusGroup.add(uranus, uranusRing);
+    uranusGroup.position.set(280, 320, 0);
 
     // Neptune: Rad 6, Color #FFFFFF, Position Vector3(320, 320, 0), Cast Shadow True, Receive Shadow True
     let neptuneLoader = new THREE.TextureLoader();
@@ -113,15 +130,31 @@ const createObject = () => {
 
     // Satelite: radTop 1, radBot 0.5, Height 0.4, radSeg 8, Color #CCCCCC, Metalness 0.5, Roughness 0.5, Position (100 + 8, 320, 0), Cast Shadow False, Receive Shadow True
     satelite = createCylinder(1, 0.5, 4, 8, "#CCCCCC", 0.5, 0.5);
-    satelite.position.set(108, 320, 0);
+    satelite.position.set(10, 0, 0);
+
+    //Group Earth and Satelite
+    let earthGroup = new THREE.Group();
+    earthGroup.add(earth, satelite);
+    earthGroup.position.set(100, 320, 0);
 
     //AmbientLight
     let ambientLight = new THREE.AmbientLight("#FFFFFF", 1);
 
     // Add All Planets (including its ring) into a group for rotation that will be applied in a different function
     planetGroup = new THREE.Group();
-    planetGroup.add(mercury, venus, earth, mars, jupiter, saturn, uranus, neptune, satelite);
+    planetGroup.add(mercury, venus, earthGroup, mars, jupiter, saturnGroup, uranusGroup, neptune);
     planetGroup.position.set(640, 0, 0); // To make all planets rotate AROUND the sun
+
+    planetDelays = [0, 500, 1000, 1500, 2000, 2500, 2500, 3000, 3000, 3500];
+    planetSpeeds = [0.009, 0.008, 0.007, 0.006, 0.005, 0.004, 0.003, 0.002, 0.001];
+    planetAngles = Array(planetSpeeds.length).fill(0); //starting angles
+
+    //Access the planets in group individually
+    planets = [mercury, venus, earthGroup, mars, jupiter, saturnGroup, uranusGroup, neptune];
+
+    //Store the sun position in variable
+    sunPosition = new THREE.Vector3(640, 320, 0);
+
 
     // Text
     text = [
@@ -218,8 +251,6 @@ const createObject = () => {
         sun,
         planetGroup,
         ambientLight,
-        saturnRing,
-        uranusRing
         textList,
     ];
 
@@ -227,6 +258,27 @@ const createObject = () => {
         scene.add(obj);
     });
 
+}
+
+const updatePlanet = () =>{
+    let currentTime = Date.now();
+
+    planets.forEach((planetGroup, index) => {
+        //delay logic
+        if(currentTime > startTime + planetDelays[index]) {
+            //Update the angle based on the speed
+            planetAngles[index] += planetSpeeds[index];
+
+            //Define the orbit eradius (distance from the sun)
+            const orbitRadius = 100 + index * 20;
+
+            //Update the planet position for orbital movement
+            planetGroup.position.x = Math.cos(planetAngles[index]) * orbitRadius;
+            planetGroup.position.z = Math.sin(planetAngles[index]) * orbitRadius;
+        }
+        
+        
+    });
 }
 
 const createSun = (rad, color) => {
@@ -260,7 +312,7 @@ const createRing = (inRad, outRad, thetaSeg, color, img) => {
     let material = new THREE.MeshStandardMaterial({
         color: color,
         map: img,
-        side: THREE.DoubleSide
+        side: THREE.DoubleSide,
     });
 
     let mesh = new THREE.Mesh(geometry, material);
@@ -307,7 +359,8 @@ const createText = (text, size, height, pos) => {
         geometry.center();
 
         let material = new THREE.MeshBasicMaterial({
-            color: "White"
+            color: "White",
+            opacity: 1
         });
 
         let mesh = new THREE.Mesh(geometry, material);
@@ -332,13 +385,13 @@ const createSpaceShip = () => {
         emissiveIntensity: 1,
         metalnessMap: metallicRoughness,
         normalMap: normalMap,
-        doubleSide: THREE.DoubleSide,
+        side: THREE.DoubleSide,
     });
 
     // Load GLTF model
     const gltfLoader = new GLTFLoader();
     gltfLoader.load('./assets/model/spaceship/scene.gltf', (gltf) => {
-        const spaceship = gltf.scene;
+        spaceship = gltf.scene;
 
         // Apply material to the spaceship meshes
         spaceship.traverse((child) => {
@@ -349,14 +402,24 @@ const createSpaceShip = () => {
             }
         });
 
+        // if(!spaceship){
+        //     console.warn("Spaceship is null");
+        //     return;
+        // }
+
         // Position and scale the spaceship
         spaceship.position.set(115, 320, 0);  // Adjust as needed
         spaceship.scale.set(0.2, 0.2, 0.2);      // Adjust scale if the spaceship is too small
 
         // Add spaceship to the scene
         scene.add(spaceship);
+        // updateSpaceship();
+
     });
 };
+
+console.log(spaceship);
+
 
 const createSkybox = () => {
     const loader = new THREE.CubeTextureLoader();
@@ -369,7 +432,7 @@ const createSkybox = () => {
         './assets/skybox/back.png',   // Negatif Z
     ]);
     scene.background = texture;
-}; d
+}; 
 const switchCam = (event) => {
     // console.log(event.key);
     if (event.key == " "){
@@ -386,13 +449,14 @@ const addEventHandler = () => {
     document.addEventListener("keydown", switchCam);   
 }
 const animate = () => {
-    planetGroup.rotation.y += 0.01;
+    // updateSpaceship();
+    updatePlanet();
 }
 
 const render = () => {
     requestAnimationFrame(render);
-    renderer.render(scene, selectedCamera);
     animate();
+    renderer.render(scene, selectedCamera);
     control.update();
 }
 
@@ -410,24 +474,27 @@ window.onresize = () => {
 }
 
 // Texts
+// Initial text set opacity to 0
+// When hovered, set text opacity to 100
 window.onmousemove = (event) => {
     const mouse = new THREE.Vector2();
-    // mouse.x = (event.clientX / window.innerWidth) * 2 -1;
-    // mouse.y = (-event.clientY / window.innerHeight) * 2 + 1;
+    mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
+    mouse.y = (-event.clientY / window.innerHeight) * 2 + 1;
 
     const raycaster = new THREE.Raycaster();
     raycaster.setFromCamera(mouse, selectedCamera); // only occur on Free Rotating Camera
     
 
     // State all planets to be interacted
-    const intersects = raycaster.intersectObjects([
-        planetGroup
-    ]);
+    // const intersects = raycaster.intersectObjects([
+    //     sun,
+    //     planetGroup
+    // ]);
 
 
     // Set colors in array
     let textColor = [
-        // Electrick Blue
+        // Electric Blue
         "#00FFFF",
         // Neon Green
         "#00FF00",
@@ -455,45 +522,8 @@ window.onmousemove = (event) => {
     // When hovered, change to random color and mention text
     // PROBLEM HERE!!!
     // Object cannot be read
-    if (intersects.length > 0) {
-        if (intersects[0].objects == sun){
-            intersects[0].objects.material.color.set("#FFFFFF");
-        }
 
-        if (intersects[0].objects == mercury){
-            intersects[0].objects.material.color.set(textColor[Math.floor() * textColor.length]);
-        }
-
-        if (intersects[0].objects == venus){
-            intersects[0].objects.material.color.set(textColor[Math.floor() * textColor.length]);
-        }
-
-        if (intersects[0].objects == earth){
-            intersects[0].objects.material.color.set(textColor[Math.floor() * textColor.length]);
-        }
-
-        if (intersects[0].objects == mars){
-            intersects[0].objects.material.color.set(textColor[Math.floor() * textColor.length]);
-        }
-
-        if (intersects[0].objects == jupiter){
-            intersects[0].objects.material.color.set(textColor[Math.floor() * textColor.length]);
-        }
-
-        if (intersects[0].objects == saturn){
-            intersects[0].objects.material.color.set(textColor[Math.floor() * textColor.length]);
-        }
-
-        if (intersects[0].objects == uranus){
-            intersects[0].objects.material.color.set(textColor[Math.floor() * textColor.length]);
-        }
-
-        if (intersects[0].objects == neptune){
-            intersects[0].objects.material.color.set(textColor[Math.floor() * textColor.length]);
-        }
-
-        if (intersects[0].objects == satelite){
-            intersects[0].objects.material.color.set(textColor[Math.floor() * textColor.length]);
-        }
-    }
+    
 }
+
+//Controller buat Spaceship
