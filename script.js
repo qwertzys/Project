@@ -2,6 +2,7 @@ import * as THREE from "./threejs/build/three.module.js";
 import {OrbitControls} from "./threejs/examples/jsm/controls/OrbitControls.js";
 import {GLTFLoader} from "./threejs/examples/jsm/loaders/GLTFLoader.js";
 import { FontLoader } from "./threejs/examples/jsm/loaders/FontLoader.js";
+import { TextGeometry } from "./threejs/examples/jsm/geometries/TextGeometry.js";
 
 var scene, freeCamera, thirdCamera, selectedCamera, renderer, control;
 var planetGroup;
@@ -120,7 +121,7 @@ const createObject = () => {
 
     // Add All Planets (including its ring) into a group for rotation that will be applied in a different function
     planetGroup = new THREE.Group();
-    planetGroup.add(mercury, venus, earth, mars, jupiter, saturn, uranus, neptune, satelite);
+    planetGroup.add(mercury, venus, earth, mars, jupiter, saturn, saturnRing, uranus, uranusRing, neptune, satelite);
     planetGroup.position.set(640, 0, 0); // To make all planets rotate AROUND the sun
 
     // Text
@@ -218,8 +219,6 @@ const createObject = () => {
         sun,
         planetGroup,
         ambientLight,
-        saturnRing,
-        uranusRing
         textList,
     ];
 
@@ -307,7 +306,8 @@ const createText = (text, size, height, pos) => {
         geometry.center();
 
         let material = new THREE.MeshBasicMaterial({
-            color: "White"
+            color: "White",
+            opacity: 1
         });
 
         let mesh = new THREE.Mesh(geometry, material);
@@ -369,7 +369,7 @@ const createSkybox = () => {
         './assets/skybox/back.png',   // Negatif Z
     ]);
     scene.background = texture;
-}; d
+}; 
 const switchCam = (event) => {
     // console.log(event.key);
     if (event.key == " "){
@@ -386,7 +386,8 @@ const addEventHandler = () => {
     document.addEventListener("keydown", switchCam);   
 }
 const animate = () => {
-    planetGroup.rotation.y += 0.01;
+    // planetGroup.rotation.y += 0.01;
+    // uranusRing.rotation.x += 100;
 }
 
 const render = () => {
@@ -410,24 +411,27 @@ window.onresize = () => {
 }
 
 // Texts
+// Initial text set opacity to 0
+// When hovered, set text opacity to 100
 window.onmousemove = (event) => {
     const mouse = new THREE.Vector2();
-    // mouse.x = (event.clientX / window.innerWidth) * 2 -1;
-    // mouse.y = (-event.clientY / window.innerHeight) * 2 + 1;
+    mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
+    mouse.y = (-event.clientY / window.innerHeight) * 2 + 1;
 
     const raycaster = new THREE.Raycaster();
     raycaster.setFromCamera(mouse, selectedCamera); // only occur on Free Rotating Camera
     
 
     // State all planets to be interacted
-    const intersects = raycaster.intersectObjects([
-        planetGroup
-    ]);
+    // const intersects = raycaster.intersectObjects([
+    //     sun,
+    //     planetGroup
+    // ]);
 
 
     // Set colors in array
     let textColor = [
-        // Electrick Blue
+        // Electric Blue
         "#00FFFF",
         // Neon Green
         "#00FF00",
@@ -455,45 +459,5 @@ window.onmousemove = (event) => {
     // When hovered, change to random color and mention text
     // PROBLEM HERE!!!
     // Object cannot be read
-    if (intersects.length > 0) {
-        if (intersects[0].objects == sun){
-            intersects[0].objects.material.color.set("#FFFFFF");
-        }
-
-        if (intersects[0].objects == mercury){
-            intersects[0].objects.material.color.set(textColor[Math.floor() * textColor.length]);
-        }
-
-        if (intersects[0].objects == venus){
-            intersects[0].objects.material.color.set(textColor[Math.floor() * textColor.length]);
-        }
-
-        if (intersects[0].objects == earth){
-            intersects[0].objects.material.color.set(textColor[Math.floor() * textColor.length]);
-        }
-
-        if (intersects[0].objects == mars){
-            intersects[0].objects.material.color.set(textColor[Math.floor() * textColor.length]);
-        }
-
-        if (intersects[0].objects == jupiter){
-            intersects[0].objects.material.color.set(textColor[Math.floor() * textColor.length]);
-        }
-
-        if (intersects[0].objects == saturn){
-            intersects[0].objects.material.color.set(textColor[Math.floor() * textColor.length]);
-        }
-
-        if (intersects[0].objects == uranus){
-            intersects[0].objects.material.color.set(textColor[Math.floor() * textColor.length]);
-        }
-
-        if (intersects[0].objects == neptune){
-            intersects[0].objects.material.color.set(textColor[Math.floor() * textColor.length]);
-        }
-
-        if (intersects[0].objects == satelite){
-            intersects[0].objects.material.color.set(textColor[Math.floor() * textColor.length]);
-        }
-    }
+    
 }
