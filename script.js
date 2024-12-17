@@ -11,6 +11,10 @@ var text, textList;
 var startTime = Date.now();
 var sunPosition;
 var spaceship;
+var moveForward = false, moveBackward = false, moveLeft = false, moveRight = false;
+var spaceshipSpeed = 1;
+var rotationSpeed = 0.05;
+var spaceshipVelocity = new THREE.Vector3(0, 0, 0);
 
 
 
@@ -51,8 +55,9 @@ const createObject = () => {
     spotLight.position.set(110, 326, 0) // Spaceship Vector3(x, y+6, z)
     
     // Sun: Rad 40, Color #FFFFFF, Position Vector3(640, 320, 0), Cast Shadow False, Receive Shadow False
-    let sun = createSun(40, "#FFFFFF");
+    sun = createSun(40, "#FFFFFF");
     sun.position.set(640, 320, 0);
+    sun.name = "Sun";
     
 
     // Mercury: Rad 3.2, Color #FFFFFF, Position Vector3(58, 320, 0), Cast Shadow True, Receive Shadow True
@@ -60,18 +65,21 @@ const createObject = () => {
     let mercuryImg = mercuryLoader.load("./assets/textures/mercury.jpg");
     mercury = createSphere(3.2, "#FFFFFF", mercuryImg);
     mercury.position.set(58, 320, 0);
+    mercury.name = "Mercury";
 
     // Venus: Rad 4.8, Color #FFFFFF, Position Vector3(80, 320, 0), Cast Shadow True, Receive Shadow True
     let venusLoader = new THREE.TextureLoader();
     let venusImg = venusLoader.load("./assets/textures/venus.jpg");
     venus = createSphere(4.8, "#FFFFFF", venusImg);
     venus.position.set(80, 320, 0);
+    venus.name = "Venus";
     
     // Earth: Rad 4.8, Color #FFFFFF, Position Vector3(100, 320, 0), Cast Shadow True, Receive Shadow True
     let earthLoader = new THREE.TextureLoader();
     let earthImg = earthLoader.load("./assets/textures/earth.jpg");
     earth = createSphere(4.8, "#FFFFFF", earthImg);
     earth.position.set(0, 0, 0);
+    earth.name = "Earth";
 
 
     // Mars: Rad 4, Color #FFFFFF, Position Vector3(130, 320, 0), Cast Shadow True, Receive Shadow True
@@ -79,18 +87,21 @@ const createObject = () => {
     let marsImg = marsLoader.load("./assets/textures/mars.jpg");
     mars = createSphere(4, "#FFFFFF", marsImg);
     mars.position.set(130, 320, 0);
+    mars.name = "Mars";
 
     // Jupiter: Rad 13, Color #FFFFFF, Position Vector3(175, 320, 0), Cast Shadow True, Receive Shadow True
     let jupiterLoader = new THREE.TextureLoader();
     let jupiterImg = jupiterLoader.load("./assets/textures/jupiter.jpg");
     jupiter = createSphere(13, "#FFFFFF", jupiterImg);
     jupiter.position.set(175, 320, 0);
+    jupiter.name = "Jupiter";
 
     // Saturn: Rad 10, Color #FFFFFF, Position Vector3(240, 320, 0), Cast Shadow True, Receive Shadow True
     let saturnLoader = new THREE.TextureLoader();
     let saturnImg = saturnLoader.load("./assets/textures/saturn.jpg");
     saturn = createSphere(10, "#FFFFFF", saturnImg);
     saturn.position.set(0, 0, 0);
+    
 
     // Saturn Ring: inRad 16, outRad 32, thetaSeg 64, Color #FFFFFF, Saturn's Position Vector3(240, 320, 0), Cast Shadow False Receive Shadow True
     let saturnRingLoader = new THREE.TextureLoader();
@@ -103,12 +114,14 @@ const createObject = () => {
     let saturnGroup = new THREE.Group();
     saturnGroup.add(saturn, saturnRing);
     saturnGroup.position.set(240, 320, 0);
+    saturnGroup.name = "Saturn";
 
     // Uranus: Rad 8, Color #FFFFFF, Position Vector3(280, 320, 0), Cast Shadow True, Receive Shadow True
     let uranusLoader = new THREE.TextureLoader();
     let uranusImg = uranusLoader.load("./assets/textures/uranus.jpg");
     uranus = createSphere(8, "#FFFFFF", uranusImg);
     uranus.position.set(0, 0, 0);
+     
 
     // Uranus Ring: inRad 16, outRad 20, thetaSeg 64, Color #FFFFFF, Uranus Position Vector3(280, 320, 0), Cast Shadow False Receive Shadow True
     let uranusRingLoader = new THREE.TextureLoader();
@@ -121,12 +134,14 @@ const createObject = () => {
     let uranusGroup = new THREE.Group();
     uranusGroup.add(uranus, uranusRing);
     uranusGroup.position.set(280, 320, 0);
+    uranusGroup.name = "Uranus";
 
     // Neptune: Rad 6, Color #FFFFFF, Position Vector3(320, 320, 0), Cast Shadow True, Receive Shadow True
     let neptuneLoader = new THREE.TextureLoader();
     let neptuneImg = neptuneLoader.load("./assets/textures/neptune.jpg");
     neptune = createSphere(6, "#FFFFFF", neptuneImg);
     neptune.position.set(320, 320, 0);
+    neptune.name = "Neptune";   
 
     // Satelite: radTop 1, radBot 0.5, Height 0.4, radSeg 8, Color #CCCCCC, Metalness 0.5, Roughness 0.5, Position (100 + 8, 320, 0), Cast Shadow False, Receive Shadow True
     satelite = createCylinder(1, 0.5, 4, 8, "#CCCCCC", 0.5, 0.5);
@@ -260,26 +275,7 @@ const createObject = () => {
 
 }
 
-const updatePlanet = () =>{
-    let currentTime = Date.now();
 
-    planets.forEach((planetGroup, index) => {
-        //delay logic
-        if(currentTime > startTime + planetDelays[index]) {
-            //Update the angle based on the speed
-            planetAngles[index] += planetSpeeds[index];
-
-            //Define the orbit eradius (distance from the sun)
-            const orbitRadius = 100 + index * 20;
-
-            //Update the planet position for orbital movement
-            planetGroup.position.x = Math.cos(planetAngles[index]) * orbitRadius;
-            planetGroup.position.z = Math.sin(planetAngles[index]) * orbitRadius;
-        }
-        
-        
-    });
-}
 
 const createSun = (rad, color) => {
     let loader = new THREE.TextureLoader();
@@ -346,6 +342,29 @@ const createBox = () => {
     return mesh;
 }
 
+// const createText = (text, size, height, pos) => {
+//     let loader = new FontLoader();
+
+//     loader.load("./threejs/examples/fonts/helvetiker_regular.typeface.json", (font) => {
+//         let geometry = new THREE.TextGeometry(text, {
+//             font: font,
+//             size: size,
+//             height: height
+//         });
+
+//         geometry.center();
+
+//         let material = new THREE.MeshBasicMaterial({
+//             color: "White",
+//             opacity: 1
+//         });
+
+//         let mesh = new THREE.Mesh(geometry, material);
+//         mesh.position.copy(pos);
+//         scene.add(textList);
+//     })
+// }
+
 const createText = (text, size, height, pos) => {
     let loader = new FontLoader();
 
@@ -365,9 +384,18 @@ const createText = (text, size, height, pos) => {
 
         let mesh = new THREE.Mesh(geometry, material);
         mesh.position.copy(pos);
-        scene.add(textList);
-    })
-}
+
+        // Atur teks menjadi tidak terlihat pada awalnya
+        mesh.visible = false;
+
+        // Simpan teks ke dalam group
+        textList.add(mesh);
+
+        // Simpan referensi teks ke objek utama (untuk kontrol raycasting)
+        mesh.name = text; // Menyimpan nama untuk referensi hover
+        textMeshes[text] = mesh; // Masukkan ke objek referensi
+    });
+};
 
 const createSpaceShip = () => {
     const loader = new THREE.TextureLoader();
@@ -418,7 +446,39 @@ const createSpaceShip = () => {
     });
 };
 
-console.log(spaceship);
+
+
+const updatePlanet = () =>{
+    let currentTime = Date.now();
+
+    planets.forEach((planetGroup, index) => {
+        //delay logic
+        if(currentTime > startTime + planetDelays[index]) {
+            //Update the angle based on the speed
+            planetAngles[index] -= planetSpeeds[index];
+
+            //Define the orbit eradius (distance from the sun)
+            const orbitRadius = 100 + index * 20;
+
+            //Update the planet position for orbital movement
+            planetGroup.position.x = Math.cos(planetAngles[index]) * orbitRadius;
+            planetGroup.position.z = Math.sin(planetAngles[index]) * orbitRadius;
+        }
+        
+        
+    });
+}
+
+const spinObjects = ()=>{
+    planets.forEach((planet) => {
+        // Rotate the planet around its own axis
+        planet.rotation.y += 0.01; // Adjust speed as needed
+    });
+
+    // Optional: Spin the sun
+    sun.rotation.y += 0.002;
+}
+
 
 
 const createSkybox = () => {
@@ -449,8 +509,9 @@ const addEventHandler = () => {
     document.addEventListener("keydown", switchCam);   
 }
 const animate = () => {
-    // updateSpaceship();
+    spinObjects();
     updatePlanet();
+    moveSpaceship();
 }
 
 const render = () => {
@@ -476,54 +537,182 @@ window.onresize = () => {
 // Texts
 // Initial text set opacity to 0
 // When hovered, set text opacity to 100
-window.onmousemove = (event) => {
-    const mouse = new THREE.Vector2();
+
+let textColor = [
+    "#00FFFF", "#00FF00", "#FFCC00", "#E6E6FA", "#FF69B4", "#FF8C00",
+    "#FFB6C1", "#00FFFF", "#87CEEB", "#A8FFB2", "#EE82EE", "#ADD8E6"
+];
+
+const mouse = new THREE.Vector2();
+const raycaster = new THREE.Raycaster();
+let hoveredObject = null;
+const textMeshes = {};
+const planetObjects = []; // Array untuk objek planet
+let currentColorIndex = 0; // Indeks awal warna
+
+// Event listener untuk pergerakan mouse
+window.addEventListener('mousemove', (event) => {
     mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
-    mouse.y = (-event.clientY / window.innerHeight) * 2 + 1;
+    mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
 
-    const raycaster = new THREE.Raycaster();
-    raycaster.setFromCamera(mouse, selectedCamera); // only occur on Free Rotating Camera
-    
+    raycaster.setFromCamera(mouse, selectedCamera);
 
-    // State all planets to be interacted
-    // const intersects = raycaster.intersectObjects([
-    //     sun,
-    //     planetGroup
-    // ]);
+    const intersects = raycaster.intersectObjects(planetObjects, true);
+
+    if (intersects.length > 0) {
+        const object = intersects[0].object;
+
+        if (hoveredObject !== object) {
+            // Sembunyikan teks objek sebelumnya
+            if (hoveredObject) {
+                const oldText = textMeshes[hoveredObject.name];
+                if (oldText) {
+                    oldText.visible = false;
+                }
+            }
+
+            // Tampilkan teks dan ubah warnanya
+            const textMesh = textMeshes[object.name];
+            if (textMesh) {
+                textMesh.visible = true;
+
+                // Ambil warna dari array textColor
+                textMesh.material.color.set(textColor[currentColorIndex]);
+
+                // Update indeks warna untuk hover berikutnya
+                currentColorIndex = (currentColorIndex + 1) % textColor.length;
+            }
+
+            hoveredObject = object;
+        }
+    } else {
+        // Sembunyikan teks saat tidak ada objek yang dihover
+        if (hoveredObject) {
+            const oldText = textMeshes[hoveredObject.name];
+            if (oldText) oldText.visible = false;
+            hoveredObject = null;
+        }
+    }
+});
+
+//Controller spaceship
+// Keyboard Input
+let keyState = {};
+
+window.addEventListener("keydown", (event) => {
+    keyState[event.key.toLowerCase()] = true;
+});
+
+window.addEventListener("keyup", (event) => {
+    keyState[event.key.toLowerCase()] = false;
+});
+
+const moveSpaceship = () => {
+    if (!spaceship) return;
+
+    // Rotation: Turn left (A) or right (D)
+    if (keyState["a"]) {
+        spaceship.rotation.y += rotationSpeed;
+    }
+    if (keyState["d"]) {
+        spaceship.rotation.y -= rotationSpeed;
+    }
+
+    // Movement: Move forward (W) or backward (S)
+    if (keyState["w"]) {
+        spaceshipVelocity.z = +spaceshipSpeed;
+    } else if (keyState["s"]) {
+        spaceshipVelocity.z = -spaceshipSpeed;
+    } else {
+        spaceshipVelocity.z = 0; // Stop movement if no keys are pressed
+    }
+
+    // Calculate the forward direction of the spaceship
+    let forward = new THREE.Vector3(0, 0, 1); // Spaceship's local forward
+    forward.applyQuaternion(spaceship.quaternion); // Apply rotation
+
+    // Update spaceship position
+    spaceship.position.addScaledVector(forward, spaceshipVelocity.z);
+
+    // Update the camera to follow the spaceship
+    updateThirdCamera();
+};
+
+const updateThirdCamera = () => {
+    if (!spaceship) return;
+
+    // Offset for the third-person camera behind and above the spaceship
+    let offset = new THREE.Vector3(0, 3,-4.5); // Adjust the y and z offset
+    offset.applyQuaternion(spaceship.quaternion); // Apply spaceship rotation
+    let cameraPosition = spaceship.position.clone().add(offset);
+
+    // Set thirdCamera's position and look at the spaceship
+    thirdCamera.position.copy(cameraPosition);
+    thirdCamera.lookAt(spaceship.position);
+};
 
 
-    // Set colors in array
-    let textColor = [
-        // Electric Blue
-        "#00FFFF",
-        // Neon Green
-        "#00FF00",
-        // Gold Yellow
-        "##FFCC00",
-        // Lavender Purple
-        "#E6E6FA",
-        // Bright Pink
-        "#FF69B4",
-        // Bright Ornage
-        "#FF8C00",
-        // Pink Pastel
-        "#FFB6C1",
-        // Cyan
-        "#00FFFF",
-        // Sky Blue
-        "#87CEEB",
-        // Green
-        "#A8FFB2",
-        // Bright Purple
-        "#EE82EE",
-        // Bright Blue
-        "#ADD8E6"
-    ]
-    // When hovered, change to random color and mention text
-    // PROBLEM HERE!!!
-    // Object cannot be read
 
-    
-}
+
+
+
 
 //Controller buat Spaceship
+// Listen for key press events
+// document.addEventListener('keydown', (event) => {
+//     switch (event.key) {
+//         case 's':
+//         case 'S':
+//             moveForward = true;
+//             break;
+//         case 'w':
+//         case 'W':
+//             moveBackward = true;
+//             break;
+//         case 'd':
+//         case 'D':
+//             moveLeft = true;
+//             break;
+//         case 'a':
+//         case 'A':
+//             moveRight = true;
+//             break;
+//     }
+// });
+
+// document.addEventListener('keyup', (event) => {
+//     switch (event.key) {
+//         case 's':
+//         case 'S':
+//             moveForward = false;
+//             break;
+//         case 'w':
+//         case 'W':
+//             moveBackward = false;
+//             break;
+//         case 'd':
+//         case 'D':
+//             moveLeft = false;
+//             break;
+//         case 'a':
+//         case 'A':
+//             moveRight = false;
+//             break;
+//     }
+// });
+
+// // Move spaceship and update third-person camera
+// const updateSpaceshipMovement = () => {
+//     if (moveForward) spaceship.position.z -= spaceshipSpeed;
+//     if (moveBackward) spaceship.position.z += spaceshipSpeed;
+//     if (moveLeft) spaceship.position.x -= spaceshipSpeed;
+//     if (moveRight) spaceship.position.x += spaceshipSpeed;
+
+//     // Update third-person camera to follow the spaceship
+//     thirdCamera.position.set(
+//         spaceship.position.x,
+//         spaceship.position.y + 16, // Slightly above the spaceship
+//         spaceship.position.z - 20 // Behind the spaceship
+//     );
+//     thirdCamera.lookAt(spaceship.position); // Camera looks at the spaceship
+// };
