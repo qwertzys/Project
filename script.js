@@ -537,6 +537,10 @@ window.onresize = () => {
 // Texts
 // Initial text set opacity to 0
 // When hovered, set text opacity to 100
+window.onmousemove = (event) => {
+    const mouse = new THREE.Vector2();
+    mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
+    mouse.y = (-event.clientY / window.innerHeight) * 2 + 1;
 
 let textColor = [
     "#00FFFF", "#00FF00", "#FFCC00", "#E6E6FA", "#FF69B4", "#FF8C00",
@@ -554,6 +558,12 @@ let currentColorIndex = 0; // Indeks awal warna
 window.addEventListener('mousemove', (event) => {
     mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
     mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
+  
+    // State all planets to be interacted
+    // const intersects = raycaster.intersectObjects([
+    //     sun,
+    //     planetGroup
+    // ]);
 
     raycaster.setFromCamera(mouse, selectedCamera);
 
@@ -716,3 +726,5 @@ const updateThirdCamera = () => {
 //     );
 //     thirdCamera.lookAt(spaceship.position); // Camera looks at the spaceship
 // };
+    // Set colors in array
+}
