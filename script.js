@@ -643,6 +643,115 @@ window.onmousemove = (event) => {
             spaceship.rotation.y -= rotationSpeed;
         }
 
+    // Event listener untuk pergerakan mouse
+    window.addEventListener('mousemove', (event) => {
+        const mouse = new THREE.Vector2();
+        mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
+        mouse.y = (-event.clientY / window.innerHeight) * 2 + 1;
+        
+        const raycaster = new THREE.Raycaster();
+        raycaster.setFromCamera(mouse, selectedCamera);
+        
+        let hoveredObject = null;
+        // let textColor = [
+        //     0x00FFFF, 0x00FF00, 0xFFCC00, 0xE6E6FA, 0xFF69B4, 0xFF8C00,
+        //     0xFFB6C1, 0x00FFFF, 0x87CEEB, 0xA8FFB2, 0xEE82EE, 0xADD8E6
+        // ];
+        let textColor = [
+            "green", "blue", "red", "yellow"
+        ];
+        // const planetObjects = [mercury, venus, earth, mars, jupiter, saturnGroup, uranusGroup, neptune]; // Array untuk objek planet
+        let currentColorIndex = 0; // Indeks awal warna
+
+        // State all planets to be interacted
+        // const intersects = raycaster.intersectObjects([
+        //     sun,
+        //     planetGroup
+        // ]);
+
+
+        const intersects = raycaster.intersectObjects([
+            mercury,
+            venus,
+            earth,
+            mars,
+            jupiter,
+            saturn,
+            uranus,
+            neptune
+        ], true);
+        
+        // Ensure that color remains the same by returning to this
+        mercury.material.color.set(0xffffff);
+        venus.material.color.set(0xffffff);
+        earth.material.color.set(0xffffff);
+        mars.material.color.set(0xffffff);
+        jupiter.material.color.set(0xffffff);
+        saturn.material.color.set(0xffffff);
+        uranus.material.color.set(0xffffff);
+        neptune.material.color.set(0xffffff);
+
+        if (intersects.length > 0) {
+            const object = intersects[0].object;
+            // This line of code can change it's color to red
+            intersects[0].object.material.color.set(textColor[Math.floor(Math.random() * 4)]);
+
+            if (hoveredObject !== object) {
+                // Sembunyikan teks objek sebelumnya
+                if (hoveredObject) {
+                    const oldText = textColor[hoveredObject.name];
+                    if (oldText) {
+                        oldText.visible = false;
+                    }
+                }
+
+                // Tampilkan teks dan ubah warnanya
+                const textMesh = textColor[object.name];
+                if (textColor) {
+                    textColor.visible = true;
+
+                    // Ambil warna dari array textColor
+                    textColor.material.color.set(textColor[currentColorIndex]);
+
+                    // Update indeks warna untuk hover berikutnya
+                    currentColorIndex = (currentColorIndex + 1) % textColor.length;
+                }
+
+                hoveredObject = object;
+            }
+        } else {
+            // Sembunyikan teks saat tidak ada objek yang dihover
+            if (hoveredObject) {
+                const oldText = textColor[hoveredObject.name];
+                if (oldText) oldText.visible = false;
+                hoveredObject = null;
+            }
+        }
+    });
+
+    //Controller spaceship
+    // Keyboard Input
+    let keyState = {};
+
+    window.addEventListener("keydown", (event) => {
+        keyState[event.key.toLowerCase()] = true;
+    });
+
+    window.addEventListener("keyup", (event) => {
+        keyState[event.key.toLowerCase()] = false;
+    });
+
+    const moveSpaceship = () => {
+        if (!spaceship) return;
+
+        // Rotation: Turn left (A) or right (D)
+        if (keyState["a"]) {
+            spaceship.rotation.y += rotationSpeed;
+        }
+        if (keyState["d"]) {
+            spaceship.rotation.y -= rotationSpeed;
+        }
+
         // Movement: Move forward (W) or backward (S)
         if (keyState["w"]) {
             spaceshipVelocity.z = +spaceshipSpeed;
@@ -675,3 +784,98 @@ window.onmousemove = (event) => {
         thirdCamera.position.copy(cameraPosition);
         thirdCamera.lookAt(spaceship.position);
     };
+
+
+        // Movement: Move forward (W) or backward (S)
+        if (keyState["w"]) {
+            spaceshipVelocity.z = +spaceshipSpeed;
+        } else if (keyState["s"]) {
+            spaceshipVelocity.z = -spaceshipSpeed;
+        } else {
+            spaceshipVelocity.z = 0; // Stop movement if no keys are pressed
+        }
+
+        // Calculate the forward direction of the spaceship
+        let forward = new THREE.Vector3(0, 0, 1); // Spaceship's local forward
+        forward.applyQuaternion(spaceship.quaternion); // Apply rotation
+
+        // Update spaceship position
+        spaceship.position.addScaledVector(forward, spaceshipVelocity.z);
+
+        // Update the camera to follow the spaceship
+        updateThirdCamera();
+    };
+
+    const updateThirdCamera = () => {
+        if (!spaceship) return;
+
+        // Offset for the third-person camera behind and above the spaceship
+        let offset = new THREE.Vector3(0, 3,-4.5); // Adjust the y and z offset
+        offset.applyQuaternion(spaceship.quaternion); // Apply spaceship rotation
+        let cameraPosition = spaceship.position.clone().add(offset);
+
+
+        // Set thirdCamera's position and look at the spaceship
+        thirdCamera.position.copy(cameraPosition);
+        thirdCamera.lookAt(spaceship.position);
+    };
+//Controller buat Spaceship
+// Listen for key press events
+// document.addEventListener('keydown', (event) => {
+//     switch (event.key) {
+//         case 's':
+//         case 'S':
+//             moveForward = true;
+//             break;
+//         case 'w':
+//         case 'W':
+//             moveBackward = true;
+//             break;
+//         case 'd':
+//         case 'D':
+//             moveLeft = true;
+//             break;
+//         case 'a':
+//         case 'A':
+//             moveRight = true;
+//             break;
+//     }
+// });
+
+// document.addEventListener('keyup', (event) => {
+//     switch (event.key) {
+//         case 's':
+//         case 'S':
+//             moveForward = false;
+//             break;
+//         case 'w':
+//         case 'W':
+//             moveBackward = false;
+//             break;
+//         case 'd':
+//         case 'D':
+//             moveLeft = false;
+//             break;
+//         case 'a':
+//         case 'A':
+//             moveRight = false;
+//             break;
+//     }
+// });
+
+// // Move spaceship and update third-person camera
+// const updateSpaceshipMovement = () => {
+//     if (moveForward) spaceship.position.z -= spaceshipSpeed;
+//     if (moveBackward) spaceship.position.z += spaceshipSpeed;
+//     if (moveLeft) spaceship.position.x -= spaceshipSpeed;
+//     if (moveRight) spaceship.position.x += spaceshipSpeed;
+
+//     // Update third-person camera to follow the spaceship
+//     thirdCamera.position.set(
+//         spaceship.position.x,
+//         spaceship.position.y + 16, // Slightly above the spaceship
+//         spaceship.position.z - 20 // Behind the spaceship
+//     );
+//     thirdCamera.lookAt(spaceship.position); // Camera looks at the spaceship
+// };
+    // Set colors in array
